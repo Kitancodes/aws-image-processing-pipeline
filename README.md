@@ -24,8 +24,7 @@ User Upload → S3 Input Bucket → Lambda Function → S3 Output Bucket
 - **Event-Driven Processing** - Automatic trigger on image upload  
 - **Metadata Tagging** - Adds processing timestamps and tags  
 - **Error Handling** - Comprehensive error logging and notifications  
-- **Scalable** - Handles multiple concurrent image uploads  
-- **Cost-Effective** - Pay only for actual processing time  
+- **Scalable** - Handles multiple concurrent image uploads   
 
 ## Technical Stack
 
@@ -34,7 +33,6 @@ User Upload → S3 Input Bucket → Lambda Function → S3 Output Bucket
 - **Storage**: Amazon S3
 - **Notifications**: Amazon SNS
 - **Monitoring**: Amazon CloudWatch
-- **IaC Potential**: Can be deployed via Terraform/CloudFormation
 
 ## How It Works
 
@@ -114,25 +112,6 @@ aws-image-processor/
 - **Automated Image Backup**: Process and tag uploaded images
 - **Content Management**: Organize images with metadata
 - **Audit Trail**: Track when and how images are processed
-- **Scalable Processing**: Handle variable upload volumes
-- **Foundation for ML**: Can be extended with image recognition/analysis
-
-## Future Enhancements
-
-- [ ] Add actual image transformation (resize, watermark, format conversion)
-- [ ] Implement AWS Rekognition for image analysis
-- [ ] Add DynamoDB for processing history
-- [ ] Create CloudWatch Dashboard for metrics visualization
-- [ ] Implement CI/CD pipeline for automated deployments
-- [ ] Add multi-format output (thumbnails, various sizes)
-- [ ] Integrate with API Gateway for REST API access
-
-## Performance Metrics
-
-- **Average Processing Time**: ~300ms per image
-- **Concurrent Processing**: Scales automatically
-- **Cost**: ~$0.20 per 1 million requests (Lambda free tier)
-- **Reliability**: 99.9% success rate with error handling
 
 ## Security
 
@@ -154,5 +133,3 @@ aws-image-processor/
 DevOps Engineer | Cloud Enthusiast  
 
 ---
-
-**⭐ Star this repo if you find it useful!**
