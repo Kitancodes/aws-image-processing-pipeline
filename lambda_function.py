@@ -1,47 +1,31 @@
 import json
 import boto3
-import base64
 from datetime import datetime
+import os
 
 s3_client = boto3.client('s3')
 sns_client = boto3.client('sns')
 
+SNS_TOPIC_ARN = 'arn:aws:sns:eu-north-1:839950285905:image-processing-notifications'
 
-SNS_TOPIC_ARN = 'arn:aws:sns:eu-north-1:839950285905:image-processing-notifications' 
+INPUT_BUCKET = 'myimage-processor-input'
+OUTPUT_BUCKET = 'myimage-processor-output'
 
 def lambda_handler(event, context):
-    """
-    Image processing pipeline using boto3 only:
-    - Copy image with metadata
-    - Add processing timestamp
-    - Tag as processed
-    """
-    
-    # Get bucket and object key from S3 event
     source_bucket = event['Records'][0]['s3']['bucket']['name']
     object_key = event['Records'][0]['s3']['object']['key']
     
-    # Define output bucket
-    output_bucket = 'myimage-processor-output'
-    
     try:
-        # Get image from S3
         response = s3_client.get_object(Bucket=source_bucket, Key=object_key)
         image_data = response['Body'].read()
         content_type = response.get('ContentType', 'image/jpeg')
         
-        # Generate timestamp
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        
-        # Generate output filename
-        import os
-        base_name = os.path.splitext(object_key)[0]
-        extension = os.path.splitext(object_key)[1]
+        base_name, extension = os.path.splitext(object_key)
         output_key = f"processed_{base_name}{extension}"
         
-        # Upload to output bucket with metadata
         s3_client.put_object(
-            Bucket=output_bucket,
+            Bucket=OUTPUT_BUCKET,
             Key=output_key,
             Body=image_data,
             ContentType=content_type,
@@ -54,11 +38,8 @@ def lambda_handler(event, context):
             Tagging=f'ProcessedBy=Lambda&Timestamp={timestamp.replace(" ", "T")}'
         )
         
-        # Log success
-        print(f"Successfully processed: {object_key} -> {output_key}")
-        print(f"Timestamp: {timestamp}")
+        print(f"Processed {object_key} -> {output_key}")
         
-        # Send SNS notification
         try:
             message = f"""
 Image Processing Complete!
@@ -66,56 +47,46 @@ Image Processing Complete!
 Original File: {object_key}
 Processed File: {output_key}
 Source Bucket: {source_bucket}
-Output Bucket: {output_bucket}
+Output Bucket: {OUTPUT_BUCKET}
 Timestamp: {timestamp}
 Status: SUCCESS
-
-Your image has been successfully processed and is available in the output bucket.
-            """
-            
+"""
             sns_client.publish(
                 TopicArn=SNS_TOPIC_ARN,
-                Subject='✅ Image Processing Completed',
+                Subject='Image Processing Completed',
                 Message=message
             )
-            print("SNS notification sent successfully")
         except Exception as sns_error:
-            print(f"SNS notification failed: {str(sns_error)}")
+            print(f"SNS notification failed: {sns_error}")
         
         return {
             'statusCode': 200,
             'body': json.dumps({
                 'message': 'Image processed successfully',
                 'input': f'{source_bucket}/{object_key}',
-                'output': f'{output_bucket}/{output_key}',
-                'timestamp': timestamp,
-                'note': 'Image copied with processing metadata and tags'
+                'output': f'{OUTPUT_BUCKET}/{output_key}',
+                'timestamp': timestamp
             })
         }
         
     except Exception as e:
-        print(f"Error processing image: {str(e)}")
-        
-        # Send error notification
+        print(f"Error processing image: {e}")
         try:
             error_message = f"""
 Image Processing FAILED!
 
 Original File: {object_key}
 Source Bucket: {source_bucket}
-Error: {str(e)}
+Error: {e}
 Timestamp: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
-
-Please check CloudWatch logs for more details.
-            """
-            
+"""
             sns_client.publish(
                 TopicArn=SNS_TOPIC_ARN,
-                Subject='❌ Image Processing Failed',
+                Subject='Image Processing Failed',
                 Message=error_message
             )
-        except:
-            pass
+        except Exception as sns_error:
+            print(f"Failed to send error SNS: {sns_error}")
         
         return {
             'statusCode': 500,
