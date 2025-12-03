@@ -6,8 +6,8 @@ from datetime import datetime
 s3_client = boto3.client('s3')
 sns_client = boto3.client('sns')
 
-# Replace with your SNS Topic ARN (you'll add this after creating SNS)
-SNS_TOPIC_ARN = 'arn:aws:sns:eu-north-1:123456789:image-processing-notifications'
+
+SNS_TOPIC_ARN = 'arn:aws:sns:eu-north-1:839950285905:image-processing-notifications' 
 
 def lambda_handler(event, context):
     """
